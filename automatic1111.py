@@ -14,10 +14,11 @@ import io
 #imports misc
 import os
 import json
-import random
+import requests
 
 #Variables
 PATH = os.path.abspath(os.path.dirname(__file__))
+NSFW_TAGS = []
 
 #Logging
 logging.basicConfig(
@@ -44,6 +45,23 @@ def image_to_byte_array(image: Image) -> bytes:
   imgByteArr = imgByteArr.getvalue()
   return imgByteArr
 
+def load_nsfw_tags():
+    try:
+        NSFW_TAGS.clear()
+        response = requests.get("https://raw.githubusercontent.com/LDNOOBW/List-of-Dirty-Naughty-Obscene-and-Otherwise-Bad-Words/master/en")
+        text = response.text
+
+        # save each line to a list
+        lines = io.StringIO(text).readlines()
+
+        # print the list of lines
+        for line in lines:
+            striped_line = line.strip()
+            NSFW_TAGS.append(striped_line)
+        return True
+    except:
+        return False
+
 def numberToEmoji(number):
     number_string = str(number)
     emojis = {
@@ -65,13 +83,21 @@ def numberToEmoji(number):
     return result
 
 def hasNSFW(input):
-    with open(os.path.join(PATH, "nsfw_flags.txt"), 'r') as file:
-        lines = file.readlines()
-
-    for line in lines:
-        line = line.strip()
-        if line in input:
-            return True
+    if len(NSFW_TAGS) == 0:
+        if not load_nsfw_tags():
+            logging.error("Could not load NSFW Tags")
+            return False
+        else:
+            for line in NSFW_TAGS:
+                if line in input:
+                    return True 
+    else:
+        for line in NSFW_TAGS:
+            print(line)
+            if line in input:
+                print("found NSFW")
+                return True
+    print("no NSFW found")
     return False
 
 #Settings
@@ -80,7 +106,7 @@ settings = {
     "general_settings" : {
         "bot_token" : "",
         "allowed_users" : [],
-        "check_nsfw" : True,
+        "check_nsfw" : False,
         "max_steps" : 100,
         "max_batch" : 30
     },
@@ -143,12 +169,14 @@ async def sendImage(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     if settings["general_settings"]["check_nsfw"] == True:
         nsfw = hasNSFW(settings["diffusion_settings"]["prompt"])
+        print("has nsfw")
     else:
         nsfw = False
+        print("no nsfw")
 
     if len(images) == 1:
-        await context.bot.send_photo(chat_id=update.effective_chat.id, photo=images[0], caption=json.dumps(info, indent=4))
-        #await context.bot.send_photo(chat_id=update.effective_chat.id, photo=images[0], has_spoiler=nsfw, caption=settings["diffusion_settings"]["prompt"])
+        #await context.bot.send_photo(chat_id=update.effective_chat.id, photo=images[0], caption=json.dumps(info, indent=4))
+        await context.bot.send_photo(chat_id=update.effective_chat.id, photo=images[0], has_spoiler=nsfw, caption=settings["diffusion_settings"]["prompt"])
     else:
         batch_size = settings["diffusion_settings"]["batch_size"]
         quotient = batch_size // 10
@@ -157,7 +185,7 @@ async def sendImage(update: Update, context: ContextTypes.DEFAULT_TYPE):
             media_group = []
             count = 0
             for p in range(10):
-                media_group.append(InputMediaPhoto(images[p+(10*i)], caption = settings["diffusion_settings"]["prompt"] if count == 0 else ''))
+                media_group.append(InputMediaPhoto(images[p+(10*i)], has_spoiler=nsfw,  caption = settings["diffusion_settings"]["prompt"] if count == 0 else ''))
                 count += 1
             await context.bot.send_media_group(chat_id=update.effective_chat.id, media=media_group)
         
@@ -165,7 +193,7 @@ async def sendImage(update: Update, context: ContextTypes.DEFAULT_TYPE):
             media_group = []
             count = 0
             for i in range(remainder):
-                media_group.append(InputMediaPhoto(images[i+(10*quotient)], caption = settings["diffusion_settings"]["prompt"] if count == 0 else ''))
+                media_group.append(InputMediaPhoto(images[i+(10*quotient)], has_spoiler=nsfw,  caption = settings["diffusion_settings"]["prompt"] if count == 0 else ''))
                 count += 1
             await context.bot.send_media_group(chat_id=update.effective_chat.id, media=media_group)
           
