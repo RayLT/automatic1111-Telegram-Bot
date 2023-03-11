@@ -48,10 +48,8 @@ def load_nsfw_tags():
         response = requests.get("https://raw.githubusercontent.com/LDNOOBW/List-of-Dirty-Naughty-Obscene-and-Otherwise-Bad-Words/master/en")
         text = response.text
 
-        # save each line to a list
         lines = io.StringIO(text).readlines()
 
-        # print the list of lines
         for line in lines:
             striped_line = line.strip()
             NSFW_TAGS.append(striped_line)
@@ -90,11 +88,8 @@ def hasNSFW(input):
                     return True 
     else:
         for line in NSFW_TAGS:
-            print(line)
             if line in input:
-                print("found NSFW")
                 return True
-    print("no NSFW found")
     return False
 
 #Settings
@@ -157,19 +152,17 @@ async def generateImage():
     for im in result.images:
         images.append(image_to_byte_array(im))
 
-    return images, result.parameters
+    return images
 
 async def sendImage(update: Update, context: ContextTypes.DEFAULT_TYPE):
     msg = await update.effective_message.reply_text(f'generating {numberToEmoji(settings["diffusion_settings"]["batch_size"])} image(s)...\n please hang tight')
 
-    images, info = await generateImage()
+    images = await generateImage()
 
     if settings["general_settings"]["check_nsfw"] == True:
         nsfw = hasNSFW(settings["diffusion_settings"]["prompt"])
-        print("has nsfw")
     else:
         nsfw = False
-        print("no nsfw")
 
     if len(images) == 1:
         #await context.bot.send_photo(chat_id=update.effective_chat.id, photo=images[0], caption=json.dumps(info, indent=4))
@@ -237,7 +230,6 @@ async def textreply(update: Update, context: ContextTypes.DEFAULT_TYPE):
     is_bot = update.message.reply_to_message.from_user
     media_caption = update.message.reply_to_message.caption
     media_group_caption = update.message.reply_to_message
-    print(media_group_caption)
     if is_bot and not media_caption == None:
         settings["diffusion_settings"]["prompt"] =  media_caption + " " + update.effective_message.text
         settings_to_json()
