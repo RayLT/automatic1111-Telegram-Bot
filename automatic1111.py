@@ -1,10 +1,7 @@
 #imports telegram
 import logging
-from typing import List
-from telegram import Update, InputMediaPhoto, constants, InlineKeyboardButton, InlineKeyboardMarkup, KeyboardButton, ReplyKeyboardMarkup
+from telegram import Update, InputMediaPhoto, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import filters, MessageHandler, ApplicationBuilder, CommandHandler, ContextTypes, ApplicationHandlerStop, TypeHandler, CallbackQueryHandler, CommandHandler
-from telegram.ext.filters import MessageFilter
-from functools import wraps
 
 #imports automatic1111
 import webuiapi
