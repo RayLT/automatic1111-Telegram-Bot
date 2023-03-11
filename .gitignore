@@ -1,3 +1,6 @@
 /bot_token.cfg
 /allowed_users.cfg
 /errorlog.log
+/settings.cfg
+/todo.txt
+/debug.py
