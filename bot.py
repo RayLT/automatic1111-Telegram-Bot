@@ -129,7 +129,7 @@ except:
     exit()
 
 #Create Client for automatic1111
-api = webuiapi.WebUIApi()
+api = webuiapi.WebUIApi(host='127.0.0.1', port=7861)
 
 async def generateImage():
     cur_mod = api.util_get_current_model()
